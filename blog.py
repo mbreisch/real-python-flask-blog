@@ -3,7 +3,7 @@
 # imports
 from flask import Flask, render_template, request, session, flash, redirect, url_for, g
 import sqlite3
-import os
+from functools import wraps
 
 # Configuration
 DATABASE = 'blog.db'
@@ -21,6 +21,16 @@ app.config.from_object(__name__)
 def connect_db():
     return sqlite3.connect(app.config['DATABASE'])
 
+def login_required(test):
+    @wraps(test)
+    def wrap(*args,**kwargs):
+        if 'logged_in' in session:
+            return test(*args,**kwargs)
+        else:
+            flash('You need to login first.')
+            return redirect(url_for('login'))
+    return wrap
+
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -35,6 +45,7 @@ def login():
 
 
 @app.route('/main')
+@login_required
 def main():
     return render_template('main.html')
 
